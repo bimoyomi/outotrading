@@ -1,0 +1,48 @@
+{
+  "version": 2,
+  "name": "binance-stochrsi-scanner",
+  "builds": [
+    {
+      "src": "binance_stochrsi_scanner.html",
+      "use": "@vercel/static"
+    }
+  ],
+  "routes": [
+    {
+      "src": "/",
+      "dest": "/binance_stochrsi_scanner.html"
+    },
+    {
+      "src": "/scanner",
+      "dest": "/binance_stochrsi_scanner.html"
+    },
+    {
+      "src": "/(.*)",
+      "dest": "/$1"
+    }
+  ],
+  "headers": [
+    {
+      "source": "/(.*)",
+      "headers": [
+        {
+          "key": "Access-Control-Allow-Origin",
+          "value": "*"
+        },
+        {
+          "key": "Access-Control-Allow-Methods",
+          "value": "GET, POST, PUT, DELETE, OPTIONS"
+        },
+        {
+          "key": "Access-Control-Allow-Headers",
+          "value": "Content-Type, Authorization"
+        }
+      ]
+    }
+  ],
+  "functions": {
+    "binance_stochrsi_scanner.html": {
+      "runtime": "nodejs18.x"
+    }
+  }
+}

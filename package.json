@@ -1,0 +1,30 @@
+{
+  "name": "binance-stochrsi-scanner",
+  "version": "1.0.0",
+  "description": "바이낸스 StochRSI %D < 1 스캐너 - 실시간 암호화폐 과매도 신호 감지",
+  "main": "binance_stochrsi_scanner.html",
+  "scripts": {
+    "start": "python -m http.server 8000",
+    "dev": "python -m http.server 8000"
+  },
+  "keywords": [
+    "binance",
+    "cryptocurrency",
+    "trading",
+    "stochrsi",
+    "scanner",
+    "technical-analysis",
+    "crypto",
+    "trading-signals"
+  ],
+  "author": "bimoyomi",
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/bimoyomi/outotrading.git"
+  },
+  "homepage": "https://github.com/bimoyomi/outotrading#readme",
+  "engines": {
+    "node": ">=14.0.0"
+  }
+}
