@@ -488,12 +488,22 @@
     <div class="container">
         <div class="header">
             <h1>🚀 바이낸스 StochRSI 스캐너</h1>
-            <p>관심 종목 (%D≤5)과 매수 종목 (%D<1)을 실시간으로 모니터링합니다</p>
+            <p>다양한 시간 간격으로 관심 종목 (%D≤5)과 매수 종목 (%D<1)을 실시간으로 모니터링합니다</p>
         </div>
 
         <div class="controls">
             <div class="control-group">
-                <!-- Top N 제한 제거됨 - 조건에 맞는 모든 종목 표시 -->
+                <div class="control-item">
+                    <label for="intervalSelect">시간 간격</label>
+                    <select id="intervalSelect" class="control-item">
+                        <option value="15m">15분</option>
+                        <option value="30m">30분</option>
+                        <option value="1h">1시간</option>
+                        <option value="4h">4시간</option>
+                        <option value="12h">12시간</option>
+                        <option value="1d" selected>1일</option>
+                    </select>
+                </div>
             </div>
             <div class="control-group">
                 <button id="specialCategoryBtn" class="btn" style="background: linear-gradient(135deg, #dc3545 0%, #fd7e14 100%);">매수 종목 (%D<1)</button>
@@ -684,6 +694,7 @@
         const resultsContainer = document.getElementById('resultsContainer');
         const resultsCount = document.getElementById('resultsCount');
         const lastUpdateSpan = document.getElementById('lastUpdate');
+        const intervalSelect = document.getElementById('intervalSelect');
 
         // 설정값 가져오기 (고정값 사용)
         function getSettings() {
@@ -691,7 +702,8 @@
                 rsiPeriod: 14,        // 고정값
                 stochPeriod: 14,      // 고정값
                 kPeriod: 3,           // 고정값
-                dPeriod: 3            // 고정값
+                dPeriod: 3,           // 고정값
+                interval: intervalSelect.value  // 선택된 시간 간격
             };
         }
 
@@ -802,13 +814,14 @@
             }
         }
 
-        // 스캔: 1일봉 기준 %D≤5% 종목 선별 (관심 종목) 및 %D<1% 종목 선별 (매수 종목)
+        // 스캔: 선택된 시간 간격 기준 %D≤5% 종목 선별 (관심 종목) 및 %D<1% 종목 선별 (매수 종목)
         async function scanSymbols(symbols, settings) {
             console.log('=== 스캔 시작 ===');
+            console.log(`시간 간격: ${settings.interval}`);
             console.log(`전체 ${symbols.length}개 종목을 분석합니다.`);
             console.log('스캔할 종목들 (처음 10개):', symbols.slice(0, 10));
             console.log('스캔할 종목들 (마지막 10개):', symbols.slice(-10));
-            showStatus(`전체 ${symbols.length}개 종목 중 %D≤5% 종목 선별 중...`, 'info');
+            showStatus(`전체 ${symbols.length}개 종목 중 ${settings.interval} 간격으로 %D≤5% 종목 선별 중...`, 'info');
             
             const hotSetResults = []; // 관심 종목: %D ≤ 5인 종목들
             const specialResults = []; // 매수 종목: %D < 1인 종목들
@@ -887,15 +900,15 @@
             return { hotSet: hotSetResults, specialCategory: specialResults };
         }
 
-        // 종목 분석 (1일봉 기준, %D ≤ 5인 종목 선별)
+        // 종목 분석 (선택된 시간 간격 기준, %D ≤ 5인 종목 선별)
         async function analyzeSymbolForHotSet(symbol, settings) {
             try {
-                const [stats, dailyKlineData] = await Promise.all([
+                const [stats, klineData] = await Promise.all([
                     fetch24hrStats(symbol),
-                    fetchDailyKlineData(symbol)
+                    fetchKlineData(symbol, settings.interval, 200)
                 ]);
 
-                if (!stats || !dailyKlineData || dailyKlineData.length < 50) {
+                if (!stats || !klineData || klineData.length < 50) {
                     return null;
                 }
 
@@ -909,13 +922,13 @@
                     return null;
                 }
 
-                const closes = dailyKlineData.map(k => k.close);
+                const closes = klineData.map(k => k.close);
                 
                 if (closes.some(c => isNaN(c) || c <= 0)) {
                     return null;
                 }
 
-                // 중요: 1일봉의 마지막 가격을 현재가로 업데이트
+                // 중요: 선택된 시간 간격의 마지막 가격을 현재가로 업데이트
                 // 스캔 시점의 현재가를 기준으로 StochRSI 계산
                 const closesWithCurrentPrice = [...closes];
                 closesWithCurrentPrice[closesWithCurrentPrice.length - 1] = price;
@@ -931,7 +944,7 @@
                 // 퍼센트 스케일로 변환
                 const dValuePercent = isFinite(stochRsi.dNow) ? stochRsi.dNow * 100 : NaN;
                 
-                // 조건: %D ≤ 5% (1일봉 기준) - 관심 종목용
+                // 조건: %D ≤ 5% (선택된 시간 간격 기준) - 관심 종목용
                 if (isFinite(stochRsi.dNow) && dValuePercent <= 5) {
                     return {
                         symbol: symbol,
@@ -1151,7 +1164,7 @@
                 console.log('=== 스캔 시작 ===');
                 console.log('스캔 설정:', settings);
                 console.log(`전체 스캔 대상: ${allSymbols.length}개 USDT-m futures 종목`);
-                console.log('스캔 조건: 관심 종목 (%D ≤ 5%), 매수 종목 (%D < 1%) (1일봉 기준, 현재가 반영)');
+                console.log(`스캔 조건: 관심 종목 (%D ≤ 5%), 매수 종목 (%D < 1%) (${settings.interval} 간격 기준, 현재가 반영)`);
                 
                 // 스캔 실행
                 const scanResults = await scanSymbols(allSymbols, settings);
@@ -1290,7 +1303,18 @@
             }
         });
 
-        // 설정 변경 시 자동 새로고침 중지 (현재 설정 변경 요소 없음)
+        // 시간 간격 선택 변경 이벤트 리스너
+        intervalSelect.addEventListener('change', async () => {
+            if (isScanning) {
+                showStatus('현재 스캔 중입니다. 잠시 후 다시 시도하세요.', 'info');
+                return;
+            }
+            
+            const selectedInterval = intervalSelect.value;
+            showStatus(`시간 간격이 ${selectedInterval}로 변경되었습니다. 자동 스캔을 시작합니다...`, 'info');
+            console.log(`시간 간격 변경: ${selectedInterval}`);
+            await runScan();
+        });
 
         // 페이지 로드 시 초기화 및 자동 스캔 시작
         document.addEventListener('DOMContentLoaded', async () => {
