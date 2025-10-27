@@ -1,0 +1,1311 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>바이낸스 StochRSI %D < 1 스캐너</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            padding: 20px;
+        }
+
+        .container {
+            max-width: 1400px;
+            margin: 0 auto;
+            background: rgba(255, 255, 255, 0.95);
+            border-radius: 20px;
+            box-shadow: 0 20px 40px rgba(0, 0, 0, 0.1);
+            overflow: hidden;
+        }
+
+        .header {
+            background: linear-gradient(135deg, #1e3c72 0%, #2a5298 100%);
+            color: white;
+            padding: 30px;
+            text-align: center;
+        }
+
+        .header h1 {
+            font-size: 2.5rem;
+            margin-bottom: 10px;
+            font-weight: 700;
+        }
+
+        .header p {
+            font-size: 1.1rem;
+            opacity: 0.9;
+        }
+
+        .controls {
+            padding: 30px;
+            background: #f8f9fa;
+            border-bottom: 1px solid #e9ecef;
+        }
+
+        .control-group {
+            display: flex;
+            gap: 20px;
+            align-items: center;
+            flex-wrap: wrap;
+            margin-bottom: 20px;
+        }
+
+        .control-item {
+            display: flex;
+            flex-direction: column;
+            gap: 5px;
+        }
+
+        .control-item label {
+            font-weight: 600;
+            color: #495057;
+            font-size: 0.9rem;
+        }
+
+        .control-item input, .control-item select {
+            padding: 10px 15px;
+            border: 2px solid #e9ecef;
+            border-radius: 8px;
+            font-size: 1rem;
+            transition: border-color 0.3s ease;
+        }
+
+        .control-item input:focus, .control-item select:focus {
+            outline: none;
+            border-color: #007bff;
+        }
+
+        .btn {
+            background: linear-gradient(135deg, #007bff 0%, #0056b3 100%);
+            color: white;
+            border: none;
+            padding: 12px 25px;
+            border-radius: 8px;
+            font-size: 1rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: transform 0.2s ease, box-shadow 0.2s ease;
+        }
+
+        .btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(0, 123, 255, 0.3);
+        }
+
+        .btn:disabled {
+            background: #6c757d;
+            cursor: not-allowed;
+            transform: none;
+            box-shadow: none;
+        }
+
+        .status {
+            padding: 15px 30px;
+            background: #e3f2fd;
+            border-left: 4px solid #2196f3;
+            margin: 20px 30px;
+            border-radius: 0 8px 8px 0;
+            font-weight: 500;
+        }
+
+        .status.error {
+            background: #ffebee;
+            border-left-color: #f44336;
+            color: #c62828;
+        }
+
+        .status.success {
+            background: #e8f5e8;
+            border-left-color: #4caf50;
+            color: #2e7d32;
+        }
+
+        .results {
+            padding: 30px;
+        }
+
+        .results-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 20px;
+        }
+
+        .results-title {
+            font-size: 1.5rem;
+            font-weight: 700;
+            color: #2c3e50;
+        }
+
+        .results-count {
+            background: #007bff;
+            color: white;
+            padding: 8px 16px;
+            border-radius: 20px;
+            font-weight: 600;
+        }
+
+        .table-container {
+            overflow-x: auto;
+            border-radius: 12px;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            background: white;
+        }
+
+        th {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 15px 12px;
+            text-align: left;
+            font-weight: 600;
+            font-size: 0.9rem;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+
+        td {
+            padding: 12px;
+            border-bottom: 1px solid #e9ecef;
+            font-size: 0.9rem;
+        }
+
+        tr:hover {
+            background: #f8f9fa;
+        }
+
+        .symbol {
+            font-weight: 700;
+            color: #2c3e50;
+        }
+
+        .price {
+            font-weight: 600;
+            color: #28a745;
+        }
+
+        .price.negative {
+            color: #dc3545;
+        }
+
+        .change {
+            font-weight: 600;
+        }
+
+        .change.positive {
+            color: #28a745;
+        }
+
+        .change.negative {
+            color: #dc3545;
+        }
+
+        .rsi-value {
+            font-weight: 600;
+        }
+
+        .rsi.oversold {
+            color: #dc3545;
+            background: #ffebee;
+            padding: 4px 8px;
+            border-radius: 4px;
+        }
+
+        .rsi.overbought {
+            color: #28a745;
+            background: #e8f5e8;
+            padding: 4px 8px;
+            border-radius: 4px;
+        }
+
+        .stoch-value {
+            font-weight: 600;
+        }
+
+        .stoch.oversold {
+            color: #dc3545;
+            background: #ffebee;
+            padding: 4px 8px;
+            border-radius: 4px;
+        }
+
+        .loading {
+            text-align: center;
+            padding: 40px;
+            color: #6c757d;
+        }
+
+        .spinner {
+            border: 4px solid #f3f3f3;
+            border-top: 4px solid #007bff;
+            border-radius: 50%;
+            width: 40px;
+            height: 40px;
+            animation: spin 1s linear infinite;
+            margin: 0 auto 20px;
+        }
+
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+
+        .no-results {
+            text-align: center;
+            padding: 60px 20px;
+            color: #6c757d;
+            font-size: 1.1rem;
+        }
+
+        .refresh-info {
+            background: #fff3cd;
+            border: 1px solid #ffeaa7;
+            color: #856404;
+            padding: 10px 15px;
+            border-radius: 8px;
+            margin-bottom: 20px;
+            font-size: 0.9rem;
+        }
+
+        @media (max-width: 768px) {
+            body {
+                padding: 10px;
+            }
+
+            .container {
+                border-radius: 15px;
+            }
+
+            .header {
+                padding: 20px 15px;
+            }
+
+            .header h1 {
+                font-size: 1.8rem;
+                margin-bottom: 8px;
+            }
+
+            .header p {
+                font-size: 1rem;
+            }
+
+            .controls {
+                padding: 20px 15px;
+            }
+
+            .control-group {
+                flex-direction: column;
+                align-items: stretch;
+                gap: 15px;
+            }
+
+            .control-item {
+                width: 100%;
+            }
+
+            .btn {
+                padding: 15px 20px;
+                font-size: 1.1rem;
+                width: 100%;
+                margin-bottom: 10px;
+            }
+
+            .status {
+                margin: 15px;
+                padding: 12px 15px;
+                font-size: 0.9rem;
+            }
+
+            .refresh-info {
+                margin: 15px;
+                padding: 12px 15px;
+                font-size: 0.85rem;
+            }
+
+            .refresh-info > div {
+                flex-direction: column;
+                gap: 10px;
+            }
+
+            .refresh-info > div > div:last-child {
+                display: flex;
+                flex-direction: column;
+                gap: 8px;
+            }
+
+            .refresh-info .btn {
+                padding: 10px 15px;
+                font-size: 0.9rem;
+                margin-bottom: 0;
+            }
+
+            .results {
+                padding: 20px 15px;
+            }
+
+            .results-header {
+                flex-direction: column;
+                gap: 15px;
+                align-items: stretch;
+            }
+
+            .results-title {
+                font-size: 1.3rem;
+            }
+
+            .results-count {
+                padding: 10px 15px;
+                font-size: 0.9rem;
+                align-self: center;
+            }
+
+            .table-container {
+                border-radius: 8px;
+                overflow-x: auto;
+                -webkit-overflow-scrolling: touch;
+            }
+
+            table {
+                min-width: 600px;
+            }
+
+            th, td {
+                padding: 10px 8px;
+                font-size: 0.85rem;
+                white-space: nowrap;
+            }
+
+            th {
+                font-size: 0.8rem;
+                padding: 12px 8px;
+            }
+
+            .symbol {
+                font-size: 0.9rem;
+                font-weight: 700;
+            }
+
+            .price {
+                font-size: 0.85rem;
+            }
+
+            .change {
+                font-size: 0.85rem;
+            }
+
+            .loading {
+                padding: 30px 15px;
+                font-size: 1rem;
+            }
+
+            .spinner {
+                width: 35px;
+                height: 35px;
+                margin-bottom: 15px;
+            }
+
+            .no-results {
+                padding: 40px 15px;
+                font-size: 1rem;
+            }
+        }
+
+        @media (max-width: 480px) {
+            .header h1 {
+                font-size: 1.5rem;
+            }
+
+            .header p {
+                font-size: 0.9rem;
+            }
+
+            .btn {
+                padding: 12px 15px;
+                font-size: 1rem;
+            }
+
+            th, td {
+                padding: 8px 6px;
+                font-size: 0.8rem;
+            }
+
+            th {
+                font-size: 0.75rem;
+                padding: 10px 6px;
+            }
+
+            .symbol {
+                font-size: 0.85rem;
+            }
+
+            .price {
+                font-size: 0.8rem;
+            }
+
+            .change {
+                font-size: 0.8rem;
+            }
+
+            .results-title {
+                font-size: 1.2rem;
+            }
+
+            .results-count {
+                padding: 8px 12px;
+                font-size: 0.85rem;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>🚀 바이낸스 StochRSI 스캐너</h1>
+            <p>관심목록 (%D≤5)과 매수 (%D<1) 종목을 실시간으로 모니터링합니다</p>
+        </div>
+
+        <div class="controls">
+            <div class="control-group">
+                <!-- Top N 제한 제거됨 - 조건에 맞는 모든 종목 표시 -->
+            </div>
+            <div class="control-group">
+                <button id="specialCategoryBtn" class="btn" style="background: linear-gradient(135deg, #dc3545 0%, #fd7e14 100%);">매수 (%D<1)</button>
+                <button id="hotSetBtn" class="btn" style="background: linear-gradient(135deg, #6f42c1 0%, #e83e8c 100%);">관심목록 (%D≤5)</button>
+            </div>
+        </div>
+
+        <div id="status" class="status" style="display: none;"></div>
+        <div id="refreshInfo" class="refresh-info" style="display: none;">
+            <div style="display: flex; justify-content: space-between; align-items: center;">
+                <div>
+                    마지막 업데이트: <span id="lastUpdate"></span>
+                </div>
+                <div style="display: flex; gap: 10px;">
+                    <button id="manualRefreshBtn" class="btn" style="background: linear-gradient(135deg, #28a745 0%, #20c997 100%); padding: 8px 15px; font-size: 0.9rem;">수동 새로고침</button>
+                    <button id="autoRefreshToggleBtn" class="btn" style="background: linear-gradient(135deg, #dc3545 0%, #fd7e14 100%); padding: 8px 15px; font-size: 0.9rem;">자동 업데이트 중지</button>
+                </div>
+            </div>
+        </div>
+
+        <div class="results">
+            <div class="results-header">
+                <div class="results-title">검색 결과</div>
+                <div id="resultsCount" class="results-count">0개 종목</div>
+            </div>
+            <div id="resultsContainer">
+                <div class="loading">
+                    <div class="spinner"></div>
+                    페이지 로딩 중... 자동으로 스캔을 시작합니다
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // 기술적 지표 계산 함수들
+        // RSI (Wilder 방법) - EMA 사용
+        function rsi(closes, r = 14) {
+            if (closes.length < r + 1) {
+                return Array(closes.length).fill(NaN);
+            }
+            
+            const out = Array(closes.length).fill(NaN);
+            const alpha = 1 / r; // EMA 알파값
+            
+            // 초기 gain/loss 계산 (SMA)
+            let gain = 0, loss = 0;
+            for (let i = 1; i <= r; i++) {
+                const ch = closes[i] - closes[i - 1];
+                gain += Math.max(ch, 0);
+                loss += Math.max(-ch, 0);
+            }
+            
+            let avgG = gain / r, avgL = loss / r;
+            
+            // 첫 번째 RSI 값 계산
+            if (avgL === 0) {
+                out[r] = 100;
+            } else {
+                out[r] = 100 - 100 / (1 + avgG / avgL);
+            }
+            
+            // 나머지 RSI 값들 계산 (EMA 방식)
+            for (let i = r + 1; i < closes.length; i++) {
+                const ch = closes[i] - closes[i - 1];
+                const g = Math.max(ch, 0), l = Math.max(-ch, 0);
+                
+                // EMA 계산: EMA_t = alpha * value_t + (1 - alpha) * EMA_{t-1}
+                avgG = alpha * g + (1 - alpha) * avgG;
+                avgL = alpha * l + (1 - alpha) * avgL;
+                
+                if (avgL === 0) {
+                    out[i] = 100;
+                } else {
+                    out[i] = 100 - 100 / (1 + avgG / avgL);
+                }
+            }
+            
+            return out;
+        }
+
+        function sma(arr, n) {
+            const out = Array(arr.length).fill(NaN);
+            let sum = 0;
+            let count = 0;
+            
+            for (let i = 0; i < arr.length; i++) {
+                if (!isNaN(arr[i])) {
+                    sum += arr[i];
+                    count++;
+                }
+                
+                if (i >= n) {
+                    if (!isNaN(arr[i - n])) {
+                        sum -= arr[i - n];
+                        count--;
+                    }
+                }
+                
+                if (count >= n) {
+                    out[i] = sum / n;
+                }
+            }
+            return out;
+        }
+
+        function stochRsiKD_fromCloses(closes, r = 14, n = 14, k = 3, d = 3) {
+            // 최소 데이터 길이 확인 (더 관대하게 설정)
+            const minLength = r + n + k + d;
+            if (closes.length < minLength) {
+                console.warn(`데이터 부족: ${closes.length} < ${minLength}`);
+                return { kNow: 0.5, dNow: 0.5, rsiNow: 50 };
+            }
+
+            // 1. RSI 계산 (Wilder 방법)
+            const rsiValues = rsi(closes, r);
+            console.log('RSI 값들:', rsiValues.slice(-10)); // 디버깅용
+            
+            // 2. StochRSI 계산 (각 시점마다 해당 시점부터 n개 기간의 최소/최대값 사용)
+            const stochRsiValues = [];
+            
+            for (let i = r; i < rsiValues.length; i++) {
+                const startIdx = Math.max(r, i - n + 1);
+                const window = rsiValues.slice(startIdx, i + 1);
+                
+                // 윈도우 크기 조건을 더 유연하게
+                if (window.length >= Math.min(n, 5)) { // 최소 5개 이상이면 계산
+                    const validWindow = window.filter(val => isFinite(val));
+                    
+                    if (validWindow.length >= Math.min(n, 5)) {
+                        const minRsi = Math.min(...validWindow);
+                        const maxRsi = Math.max(...validWindow);
+                        const currentRsi = rsiValues[i];
+                        
+                        if (maxRsi !== minRsi && isFinite(currentRsi) && isFinite(minRsi) && isFinite(maxRsi)) {
+                            const stochRsi = (currentRsi - minRsi) / (maxRsi - minRsi);
+                            stochRsiValues.push(Math.max(0, Math.min(1, stochRsi)));
+                        } else {
+                            stochRsiValues.push(0.5); // 기본값
+                        }
+                    } else {
+                        stochRsiValues.push(0.5); // 기본값
+                    }
+                } else {
+                    stochRsiValues.push(0.5); // 기본값
+                }
+            }
+            
+            console.log('StochRSI 값들:', stochRsiValues.slice(-10)); // 디버깅용
+            
+            // 3. %K 계산 (StochRSI의 k기간 SMA)
+            const kValues = sma(stochRsiValues, k);
+            console.log('%K 값들:', kValues.slice(-10)); // 디버깅용
+            
+            // 4. %D 계산 (%K의 d기간 SMA)
+            const dValues = sma(kValues, d);
+            console.log('%D 값들:', dValues.slice(-10)); // 디버깅용
+            
+            // 현재 값들 반환
+            const currentK = kValues[kValues.length - 1];
+            const currentD = dValues[dValues.length - 1];
+            const currentRsi = rsiValues[rsiValues.length - 1];
+            
+            console.log(`최종 값들 - RSI: ${currentRsi}, %K: ${currentK}, %D: ${currentD}`);
+            
+            return { 
+                kNow: isFinite(currentK) ? currentK : 0.5, 
+                dNow: isFinite(currentD) ? currentD : 0.5, 
+                rsiNow: isFinite(currentRsi) ? currentRsi : 50 
+            };
+        }
+
+        // 전역 변수
+        let isScanning = false;
+        let scanInterval = null;
+        let allSymbols = [];
+        let filteredResults = [];
+        let hotSet = []; // 스캔 결과 (관심목록 버튼용) - %D ≤ 5인 종목들
+        let specialCategory = []; // 매수 - %D < 1인 종목들
+
+        // DOM 요소들
+        const hotSetBtn = document.getElementById('hotSetBtn');
+        const specialCategoryBtn = document.getElementById('specialCategoryBtn');
+        const manualRefreshBtn = document.getElementById('manualRefreshBtn');
+        const autoRefreshToggleBtn = document.getElementById('autoRefreshToggleBtn');
+        const statusDiv = document.getElementById('status');
+        const refreshInfoDiv = document.getElementById('refreshInfo');
+        const resultsContainer = document.getElementById('resultsContainer');
+        const resultsCount = document.getElementById('resultsCount');
+        const lastUpdateSpan = document.getElementById('lastUpdate');
+
+        // 설정값 가져오기 (고정값 사용)
+        function getSettings() {
+            return {
+                rsiPeriod: 14,        // 고정값
+                stochPeriod: 14,      // 고정값
+                kPeriod: 3,           // 고정값
+                dPeriod: 3            // 고정값
+            };
+        }
+
+        // 상태 표시
+        function showStatus(message, type = 'info') {
+            statusDiv.textContent = message;
+            statusDiv.className = `status ${type}`;
+            statusDiv.style.display = 'block';
+        }
+
+        // 하드코딩된 주요 심볼 목록 (백업용)
+        const MAJOR_SYMBOLS = [
+            'BTCUSDT', 'ETHUSDT', 'BNBUSDT', 'ADAUSDT', 'XRPUSDT',
+            'SOLUSDT', 'DOTUSDT', 'DOGEUSDT', 'AVAXUSDT', 'SHIBUSDT',
+            'MATICUSDT', 'LTCUSDT', 'UNIUSDT', 'LINKUSDT', 'ATOMUSDT',
+            'VETUSDT', 'FILUSDT', 'TRXUSDT', 'ETCUSDT', 'XLMUSDT',
+            'BCHUSDT', 'ALGOUSDT', 'ICPUSDT', 'THETAUSDT', 'EOSUSDT',
+            'AAVEUSDT', 'SUSHIUSDT', 'COMPUSDT', 'YFIUSDT', 'SNXUSDT',
+            'MKRUSDT', 'CRVUSDT', '1INCHUSDT', 'UMAUSDT', 'BALUSDT',
+            'ZRXUSDT', 'BATUSDT', 'ZECUSDT', 'DASHUSDT', 'NEOUSDT',
+            'QTUMUSDT', 'IOTAUSDT', 'ONTUSDT', 'ZILUSDT', 'OMGUSDT'
+        ];
+
+        // 간단한 fetch 함수 (CORS 우회 없이, 재시도 로직 포함)
+        async function fetchWithProxy(url, retries = 3) {
+            for (let attempt = 1; attempt <= retries; attempt++) {
+                try {
+                    console.log(`API 호출 (시도 ${attempt}/${retries}): ${url}`);
+                    const response = await fetch(url, {
+                        method: 'GET',
+                        mode: 'cors',
+                        headers: {
+                            'Accept': 'application/json',
+                        }
+                    });
+                    
+                    if (response.ok) {
+                        console.log('API 호출 성공!');
+                        return response;
+                    } else if (response.status === 429) {
+                        // Rate limit 오류인 경우 더 오래 대기
+                        const waitTime = Math.pow(2, attempt) * 1000; // 2초, 4초, 8초
+                        console.warn(`Rate limit 도달. ${waitTime/1000}초 대기 후 재시도...`);
+                        await new Promise(resolve => setTimeout(resolve, waitTime));
+                        continue;
+                    } else {
+                        throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+                    }
+                } catch (error) {
+                    console.warn(`API 호출 실패 (시도 ${attempt}/${retries}):`, error.message);
+                    if (attempt === retries) {
+                        throw error;
+                    }
+                    // 재시도 전에 잠시 대기
+                    await new Promise(resolve => setTimeout(resolve, 1000 * attempt));
+                }
+            }
+        }
+
+        // 심볼 목록 가져오기 (모든 USDT-m futures 종목)
+        async function fetchSymbols() {
+            try {
+                console.log('바이낸스 API에서 모든 USDT-m futures 종목 가져오기...');
+                showStatus('모든 USDT-m futures 종목을 가져오는 중...', 'info');
+                
+                const response = await fetchWithProxy('https://fapi.binance.com/fapi/v1/exchangeInfo');
+                
+                if (!response.ok) {
+                    throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+                }
+                
+                const data = await response.json();
+                console.log('Exchange Info 응답:', data);
+                
+                if (!data.symbols || !Array.isArray(data.symbols)) {
+                    throw new Error('유효하지 않은 응답 구조');
+                }
+                
+                // USDT-m futures 종목만 필터링
+                const usdtSymbols = data.symbols
+                    .filter(symbol => 
+                        symbol.status === 'TRADING' && 
+                        symbol.symbol.endsWith('USDT') &&
+                        symbol.contractType === 'PERPETUAL'
+                    )
+                    .map(symbol => symbol.symbol)
+                    .sort();
+                
+                console.log(`총 ${usdtSymbols.length}개 USDT-m futures 종목 발견`);
+                console.log('발견된 종목들 (처음 20개):', usdtSymbols.slice(0, 20));
+                console.log('발견된 종목들 (마지막 20개):', usdtSymbols.slice(-20));
+                console.log('전체 종목 목록:', usdtSymbols);
+                
+                // 최소 종목 수 확인 (일반적으로 200개 이상이어야 함)
+                if (usdtSymbols.length < 100) {
+                    console.warn(`경고: 예상보다 적은 종목 수 (${usdtSymbols.length}개). API 응답을 다시 확인하세요.`);
+                }
+                
+                showStatus(`${usdtSymbols.length}개 USDT-m futures 종목을 가져왔습니다.`, 'success');
+                
+                return usdtSymbols;
+                
+            } catch (error) {
+                console.error('API에서 종목 목록 가져오기 실패:', error);
+                console.log('백업으로 주요 심볼 목록 사용...');
+                showStatus(`API 오류로 인해 ${MAJOR_SYMBOLS.length}개 주요 심볼을 사용합니다.`, 'error');
+                return MAJOR_SYMBOLS;
+            }
+        }
+
+        // 스캔: 1일봉 기준 %D≤5% 종목 선별 (관심목록) 및 %D<1% 종목 선별 (매수)
+        async function scanSymbols(symbols, settings) {
+            console.log('=== 스캔 시작 ===');
+            console.log(`전체 ${symbols.length}개 종목을 분석합니다.`);
+            console.log('스캔할 종목들 (처음 10개):', symbols.slice(0, 10));
+            console.log('스캔할 종목들 (마지막 10개):', symbols.slice(-10));
+            showStatus(`전체 ${symbols.length}개 종목 중 %D≤5% 종목 선별 중...`, 'info');
+            
+            const hotSetResults = []; // 관심목록: %D ≤ 5인 종목들
+            const specialResults = []; // 매수: %D < 1인 종목들
+            const batchSize = 10; // 배치 크기 증가 (처리 속도 향상)
+            let processedCount = 0;
+            let errorCount = 0;
+            
+            for (let i = 0; i < symbols.length; i += batchSize) {
+                if (!isScanning) break;
+                
+                const batch = symbols.slice(i, i + batchSize);
+                const batchPromises = batch.map(symbol => analyzeSymbolForHotSet(symbol, settings));
+                
+                try {
+                    const batchResults = await Promise.allSettled(batchPromises);
+                    const validResults = batchResults
+                        .filter(result => result.status === 'fulfilled' && result.value !== null)
+                        .map(result => result.value);
+                    
+                    const batchErrors = batchResults
+                        .filter(result => result.status === 'rejected')
+                        .length;
+                    
+                    // 결과를 두 카테고리로 분류
+                    validResults.forEach(result => {
+                        if (result.dValue < 1) {
+                            specialResults.push(result); // 매수: %D < 1
+                        }
+                        if (result.dValue <= 5) {
+                            hotSetResults.push(result); // 관심목록: %D ≤ 5
+                        }
+                    });
+                    
+                    processedCount += batch.length;
+                    errorCount += batchErrors;
+                    
+                    const progress = Math.min(i + batchSize, symbols.length);
+                    const percentage = Math.round((progress / symbols.length) * 100);
+                    showStatus(`진행: ${progress}/${symbols.length}개 종목 분석 (${percentage}%) - 관심목록: ${hotSetResults.length}개, 매수: ${specialResults.length}개, 오류: ${errorCount}개`, 'info');
+                    
+                    console.log(`배치 ${Math.floor(i/batchSize) + 1}: ${batch.length}개 처리, ${validResults.length}개 성공, ${batchErrors}개 실패`);
+                    
+            } catch (error) {
+                    console.error('배치 처리 오류:', error);
+                    errorCount += batch.length;
+                }
+                
+                await new Promise(resolve => setTimeout(resolve, 500)); // 0.5초 대기로 단축
+            }
+            
+            // 거래량 기준으로 정렬
+            hotSetResults.sort((a, b) => b.volumeUsdt - a.volumeUsdt);
+            specialResults.sort((a, b) => b.volumeUsdt - a.volumeUsdt);
+            
+            // 전역 변수에 저장
+            hotSet = hotSetResults; // 관심목록: %D ≤ 5인 종목들
+            specialCategory = specialResults; // 매수: %D < 1인 종목들
+            
+            console.log(`=== 스캔 완료 ===`);
+            console.log(`전체 처리된 종목: ${processedCount}/${symbols.length}개`);
+            console.log(`오류 발생: ${errorCount}개`);
+            console.log(`관심목록 (%D ≤ 5): ${hotSetResults.length}개`);
+            console.log(`매수 (%D < 1): ${specialResults.length}개`);
+            console.log('관심목록 종목들:', hotSetResults.map(item => `${item.symbol}(${item.dValue.toFixed(2)}%)`));
+            console.log('매수 종목들:', specialResults.map(item => `${item.symbol}(${item.dValue.toFixed(2)}%)`));
+            
+            // 처리 완료율 확인
+            const completionRate = Math.round((processedCount / symbols.length) * 100);
+            if (completionRate < 95) {
+                console.warn(`경고: 전체 종목의 ${completionRate}%만 처리되었습니다. 일부 종목이 누락되었을 수 있습니다.`);
+                showStatus(`경고: ${completionRate}%만 처리됨. 일부 종목이 누락되었을 수 있습니다.`, 'error');
+            } else {
+                showStatus(`스캔 완료: 관심목록 ${hotSetResults.length}개, 매수 ${specialResults.length}개 발견 (${completionRate}% 처리 완료)`, 'success');
+            }
+            
+            return { hotSet: hotSetResults, specialCategory: specialResults };
+        }
+
+        // 종목 분석 (1일봉 기준, %D ≤ 5인 종목 선별)
+        async function analyzeSymbolForHotSet(symbol, settings) {
+            try {
+                const [stats, dailyKlineData] = await Promise.all([
+                    fetch24hrStats(symbol),
+                    fetchDailyKlineData(symbol)
+                ]);
+
+                if (!stats || !dailyKlineData || dailyKlineData.length < 50) {
+                    return null;
+                }
+
+                // 가격 데이터 유효성 검사
+                const price = parseFloat(stats.lastPrice);
+                const change = parseFloat(stats.priceChange);
+                const changePercent = parseFloat(stats.priceChangePercent);
+                const volume = parseFloat(stats.volume);
+
+                if (isNaN(price) || isNaN(change) || isNaN(changePercent) || isNaN(volume)) {
+                    return null;
+                }
+
+                const closes = dailyKlineData.map(k => k.close);
+                
+                if (closes.some(c => isNaN(c) || c <= 0)) {
+                    return null;
+                }
+
+                // 중요: 1일봉의 마지막 가격을 현재가로 업데이트
+                // 스캔 시점의 현재가를 기준으로 StochRSI 계산
+                const closesWithCurrentPrice = [...closes];
+                closesWithCurrentPrice[closesWithCurrentPrice.length - 1] = price;
+
+                const stochRsi = stochRsiKD_fromCloses(
+                    closesWithCurrentPrice, 
+                    settings.rsiPeriod, 
+                    settings.stochPeriod, 
+                    settings.kPeriod, 
+                    settings.dPeriod
+                );
+
+                // 퍼센트 스케일로 변환
+                const dValuePercent = isFinite(stochRsi.dNow) ? stochRsi.dNow * 100 : NaN;
+                
+                // 조건: %D ≤ 5% (1일봉 기준) - 관심목록용
+                if (isFinite(stochRsi.dNow) && dValuePercent <= 5) {
+                    return {
+                        symbol: symbol,
+                        price: price,
+                        change: change,
+                        changePercent: changePercent,
+                        volume: volume,
+                        volumeUsdt: volume * price,
+                        rsi: stochRsi.rsiNow,
+                        kValue: stochRsi.kNow * 100,
+                        dValue: dValuePercent,
+                        timestamp: new Date().toLocaleTimeString()
+                    };
+                }
+
+                return null;
+            } catch (error) {
+                console.error(`${symbol} 분석 실패:`, error);
+                return null;
+            }
+        }
+
+        // 바이낸스 API에서 24시간 통계 가져오기
+        async function fetch24hrStats(symbol) {
+            try {
+                const response = await fetchWithProxy(`https://fapi.binance.com/fapi/v1/ticker/24hr?symbol=${symbol}`);
+                
+                if (!response.ok) {
+                    console.warn(`${symbol} 통계 API 오류: ${response.status}`);
+                    return null;
+                }
+                
+                const data = await response.json();
+                
+                // 데이터 유효성 검사
+                if (!data || typeof data.lastPrice === 'undefined' || typeof data.priceChange === 'undefined') {
+                    console.warn(`${symbol}: 유효하지 않은 데이터 구조`, data);
+                    return null;
+                }
+                
+                // NaN 값 체크
+                if (isNaN(parseFloat(data.lastPrice)) || isNaN(parseFloat(data.priceChange))) {
+                    console.warn(`${symbol}: 가격 데이터에 NaN 포함`, data);
+                    return null;
+                }
+                
+                return data;
+            } catch (error) {
+                console.error(`${symbol} 통계 가져오기 실패:`, error);
+                return null;
+            }
+        }
+
+        // 바이낸스 API에서 Kline 데이터 가져오기
+        async function fetchKlineData(symbol, interval = '1h', limit = 200) {
+            try {
+                const response = await fetchWithProxy(`https://fapi.binance.com/fapi/v1/klines?symbol=${symbol}&interval=${interval}&limit=${limit}`);
+                
+                if (!response.ok) {
+                    console.warn(`${symbol} Kline API 오류: ${response.status}`);
+                    return null;
+                }
+                
+                const data = await response.json();
+                return data.map(k => ({
+                    open: parseFloat(k[1]),
+                    high: parseFloat(k[2]),
+                    low: parseFloat(k[3]),
+                    close: parseFloat(k[4]),
+                    volume: parseFloat(k[5])
+                }));
+            } catch (error) {
+                console.error(`${symbol} Kline 데이터 가져오기 실패:`, error);
+                return null;
+            }
+        }
+
+        // 1일봉 데이터 가져오기
+        async function fetchDailyKlineData(symbol, limit = 100) {
+            return await fetchKlineData(symbol, '1d', limit);
+        }
+
+
+
+        // 종목 분석 (기존 함수 - 호환성 유지)
+        async function analyzeSymbol(symbol, settings) {
+            try {
+                const [stats, klineData] = await Promise.all([
+                    fetch24hrStats(symbol),
+                    fetchKlineData(symbol)
+                ]);
+
+                if (!stats || !klineData || klineData.length < 50) {
+                    console.log(`${symbol}: 데이터 부족 - stats: ${!!stats}, klineData: ${klineData?.length || 0}`);
+                    return null;
+                }
+
+                // 가격 데이터 유효성 검사
+                const price = parseFloat(stats.lastPrice);
+                const change = parseFloat(stats.priceChange);
+                const changePercent = parseFloat(stats.priceChangePercent);
+                const volume = parseFloat(stats.volume);
+
+                if (isNaN(price) || isNaN(change) || isNaN(changePercent) || isNaN(volume)) {
+                    console.log(`${symbol}: 가격 데이터에 NaN 포함 - price: ${price}, change: ${change}, changePercent: ${changePercent}, volume: ${volume}`);
+                    return null;
+                }
+
+                const closes = klineData.map(k => k.close);
+                
+                // Kline 데이터 유효성 검사
+                if (closes.some(c => isNaN(c) || c <= 0)) {
+                    console.log(`${symbol}: Kline 데이터에 유효하지 않은 값 포함`);
+                    return null;
+                }
+
+                // 중요: 마지막 가격을 현재가로 업데이트
+                const closesWithCurrentPrice = [...closes];
+                closesWithCurrentPrice[closesWithCurrentPrice.length - 1] = price;
+                console.log(`${symbol}: 마지막 가격을 현재가(${price})로 업데이트`);
+
+                const stochRsi = stochRsiKD_fromCloses(
+                    closesWithCurrentPrice, 
+                    settings.rsiPeriod, 
+                    settings.stochPeriod, 
+                    settings.kPeriod, 
+                    settings.dPeriod
+                );
+
+                // 퍼센트 스케일로 변환
+                const dValuePercent = isFinite(stochRsi.dNow) ? stochRsi.dNow * 100 : NaN;
+                console.log(`${symbol}: RSI=${stochRsi.rsiNow?.toFixed(2)}, %K=${(stochRsi.kNow * 100)?.toFixed(2)}, %D=${dValuePercent?.toFixed(2)}`);
+
+                // %D 값이 유효하고 1% 미만인 경우만 반환 (기존 함수 - 호환성 유지)
+                if (isFinite(stochRsi.dNow) && dValuePercent < 1) {
+                    console.log(`✅ ${symbol}: 조건 만족! %D=${dValuePercent.toFixed(2)} < 1%`);
+                    return {
+                        symbol: symbol,
+                        price: price,
+                        change: change,
+                        changePercent: changePercent,
+                        volume: volume,
+                        rsi: stochRsi.rsiNow,
+                        kValue: stochRsi.kNow * 100,
+                        dValue: dValuePercent,
+                        timestamp: new Date().toLocaleTimeString()
+                    };
+                }
+
+                return null;
+            } catch (error) {
+                console.error(`${symbol} 분석 실패:`, error);
+                return null;
+            }
+        }
+
+        // 결과 테이블 생성
+        function createResultsTable(results) {
+            if (results.length === 0) {
+                return '<div class="no-results">조건에 맞는 종목이 없습니다.</div>';
+            }
+
+            // %D 값으로 정렬 (낮은 순)
+            results.sort((a, b) => a.dValue - b.dValue);
+
+            let tableHTML = `
+                <div class="table-container">
+                    <table>
+                        <thead>
+                            <tr>
+                                <th>심볼</th>
+                                <th>현재가</th>
+                                <th>변동률</th>
+                                <th>거래량</th>
+                                <th>RSI</th>
+                                <th>%K</th>
+                                <th>%D</th>
+                                <th>업데이트</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+            `;
+
+            results.forEach(item => {
+                const changeClass = item.changePercent >= 0 ? 'positive' : 'negative';
+                const rsiClass = item.rsi < 30 ? 'oversold' : item.rsi > 70 ? 'overbought' : '';
+                const stochClass = item.dValue < 20 ? 'oversold' : '';
+
+                tableHTML += `
+                    <tr>
+                        <td class="symbol">${item.symbol}</td>
+                        <td class="price ${item.changePercent < 0 ? 'negative' : ''}">$${item.price.toFixed(4)}</td>
+                        <td class="change ${changeClass}">${item.changePercent >= 0 ? '+' : ''}${item.changePercent.toFixed(2)}%</td>
+                        <td>${(item.volume * item.price).toLocaleString()} USDT</td>
+                        <td class="rsi-value ${rsiClass}">${item.rsi.toFixed(2)}</td>
+                        <td class="stoch-value">${item.kValue.toFixed(2)}</td>
+                        <td class="stoch-value ${stochClass}">${item.dValue.toFixed(2)}</td>
+                        <td>${item.timestamp}</td>
+                    </tr>
+                `;
+            });
+
+            tableHTML += `
+                        </tbody>
+                    </table>
+                </div>
+            `;
+
+            return tableHTML;
+        }
+
+        // 스캔 실행
+        async function runScan() {
+            if (isScanning) return;
+
+            isScanning = true;
+
+            try {
+                showStatus('전체 USDT-m futures 종목 스캔 시작...', 'info');
+                
+                if (allSymbols.length === 0) {
+                    allSymbols = await fetchSymbols();
+                }
+
+                const settings = getSettings();
+                console.log('=== 스캔 시작 ===');
+                console.log('스캔 설정:', settings);
+                console.log(`전체 스캔 대상: ${allSymbols.length}개 USDT-m futures 종목`);
+                console.log('스캔 조건: 관심목록 (%D ≤ 5%), 매수 (%D < 1%) (1일봉 기준, 현재가 반영)');
+                
+                // 스캔 실행
+                const scanResults = await scanSymbols(allSymbols, settings);
+                
+                // 결과 표시 (기본적으로 매수 종목 표시)
+                filteredResults = scanResults.specialCategory;
+                resultsCount.textContent = `${scanResults.specialCategory.length}개 종목`;
+                resultsContainer.innerHTML = createResultsTable(scanResults.specialCategory);
+
+                if (scanResults.specialCategory.length > 0) {
+                    showStatus(`스캔 완료! 매수 ${scanResults.specialCategory.length}개, 관심목록 ${scanResults.hotSet.length}개 종목을 발견했습니다.`, 'success');
+                } else {
+                    showStatus(`스캔 완료! 조건을 만족하는 종목이 없습니다.`, 'info');
+                }
+
+                // 스캔 완료 후 자동 업데이트 정보 갱신
+                updateRefreshInfo();
+
+            } catch (error) {
+                console.error('스캔 오류:', error);
+                showStatus(`오류 발생: ${error.message}`, 'error');
+                resultsContainer.innerHTML = '<div class="no-results">데이터를 가져올 수 없습니다.</div>';
+                
+                // 오류가 발생해도 자동 업데이트는 계속 작동하도록 함
+                console.log('오류 발생했지만 자동 업데이트는 계속 작동합니다.');
+            } finally {
+                isScanning = false;
+            }
+        }
+
+        // 자동 새로고침 시작
+        function startAutoRefresh() {
+            if (scanInterval) clearInterval(scanInterval);
+            
+            scanInterval = setInterval(() => {
+                console.log('자동 업데이트 시작...');
+                if (isScanning) {
+                    console.log('현재 스캔 중이므로 건너뜀');
+                    return;
+                }
+                runScan();
+            }, 300000); // 5분마다 새로고침
+
+            refreshInfoDiv.style.display = 'block';
+            updateRefreshInfo();
+            updateAutoRefreshButton();
+            console.log('자동 업데이트 시작됨 - 5분마다 실행');
+        }
+
+        // 자동 새로고침 중지
+        function stopAutoRefresh() {
+            if (scanInterval) {
+                clearInterval(scanInterval);
+                scanInterval = null;
+                console.log('자동 업데이트 중지됨');
+            }
+            // 자동 업데이트가 중지되어도 버튼은 계속 보이도록 함
+            refreshInfoDiv.style.display = 'block';
+            updateAutoRefreshButton();
+        }
+
+        // 자동 업데이트 상태 확인
+        function isAutoRefreshActive() {
+            return scanInterval !== null;
+        }
+
+        // 자동 업데이트 버튼 상태 업데이트
+        function updateAutoRefreshButton() {
+            if (isAutoRefreshActive()) {
+                autoRefreshToggleBtn.textContent = '자동 업데이트 중지';
+                autoRefreshToggleBtn.style.background = 'linear-gradient(135deg, #dc3545 0%, #fd7e14 100%)';
+            } else {
+                autoRefreshToggleBtn.textContent = '자동 업데이트 시작';
+                autoRefreshToggleBtn.style.background = 'linear-gradient(135deg, #28a745 0%, #20c997 100%)';
+            }
+        }
+
+        // 새로고침 정보 업데이트
+        function updateRefreshInfo() {
+            const now = new Date();
+            lastUpdateSpan.textContent = now.toLocaleTimeString();
+        }
+
+        // 이벤트 리스너
+
+        // 관심목록 보기 버튼 이벤트 리스너
+        hotSetBtn.addEventListener('click', () => {
+            if (hotSet.length === 0) {
+                showStatus('관심목록이 없습니다. 먼저 스캔을 실행하세요.', 'info');
+                resultsContainer.innerHTML = '<div class="no-results">관심목록이 없습니다. 먼저 스캔을 실행하세요.</div>';
+                resultsCount.textContent = '0개 종목';
+                return;
+            }
+            
+            showStatus(`관심목록 (%D≤5) ${hotSet.length}개 종목 표시`, 'info');
+            resultsCount.textContent = `${hotSet.length}개 관심종목`;
+            resultsContainer.innerHTML = createResultsTable(hotSet);
+        });
+
+        // 매수 보기 버튼 이벤트 리스너
+        specialCategoryBtn.addEventListener('click', () => {
+            if (specialCategory.length === 0) {
+                showStatus('매수 종목이 없습니다. 먼저 스캔을 실행하세요.', 'info');
+                resultsContainer.innerHTML = '<div class="no-results">매수 종목이 없습니다. 먼저 스캔을 실행하세요.</div>';
+                resultsCount.textContent = '0개 종목';
+                return;
+            }
+            
+            showStatus(`매수 (%D<1) ${specialCategory.length}개 종목 표시`, 'info');
+            resultsCount.textContent = `${specialCategory.length}개 매수종목`;
+            resultsContainer.innerHTML = createResultsTable(specialCategory);
+        });
+
+        // 수동 새로고침 버튼 이벤트 리스너
+        manualRefreshBtn.addEventListener('click', async () => {
+            if (isScanning) {
+                showStatus('현재 스캔 중입니다. 잠시 후 다시 시도하세요.', 'info');
+                return;
+            }
+            
+            showStatus('수동 새로고침을 시작합니다...', 'info');
+            console.log('수동 새로고침 시작');
+            await runScan();
+        });
+
+        // 자동 업데이트 토글 버튼 이벤트 리스너
+        autoRefreshToggleBtn.addEventListener('click', () => {
+            if (isAutoRefreshActive()) {
+                stopAutoRefresh();
+                showStatus('자동 업데이트가 중지되었습니다.', 'info');
+                console.log('자동 업데이트 중지됨');
+            } else {
+                startAutoRefresh();
+                showStatus('자동 업데이트가 시작되었습니다.', 'success');
+                console.log('자동 업데이트 시작됨');
+            }
+        });
+
+        // 설정 변경 시 자동 새로고침 중지 (현재 설정 변경 요소 없음)
+
+        // 페이지 로드 시 초기화 및 자동 스캔 시작
+        document.addEventListener('DOMContentLoaded', async () => {
+            showStatus('자동 스캔을 시작합니다...', 'info');
+            console.log('페이지 로드 완료 - 자동 스캔 시작');
+            
+            // 페이지 로드 후 1초 뒤에 자동으로 스캔 시작
+            setTimeout(async () => {
+                try {
+                    await runScan();
+                    startAutoRefresh();
+                    console.log('초기 스캔 완료 및 자동 업데이트 시작');
+                } catch (error) {
+                    console.error('초기 스캔 실패:', error);
+                    showStatus('초기 스캔 실패했지만 자동 업데이트를 시작합니다.', 'error');
+                    // 초기 스캔이 실패해도 자동 업데이트는 시작
+                    startAutoRefresh();
+                }
+            }, 1000);
+        });
+    </script>
+</body>
+</html>
