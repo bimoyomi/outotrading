@@ -232,14 +232,28 @@
         }
 
         .stoch-value {
-            font-weight: 600;
+            font-weight: 700;
+            font-size: 1.1rem;
+            color: #e83e8c;
+            background: #fff0f5;
+            padding: 8px 12px;
+            border-radius: 6px;
+            display: inline-block;
+            min-width: 60px;
+            text-align: center;
         }
 
         .stoch.oversold {
-            color: #dc3545;
-            background: #ffebee;
-            padding: 4px 8px;
-            border-radius: 4px;
+            color: #ffffff;
+            background: linear-gradient(135deg, #dc3545 0%, #c82333 100%);
+            padding: 8px 12px;
+            border-radius: 6px;
+            font-weight: 700;
+            font-size: 1.15rem;
+            display: inline-block;
+            min-width: 60px;
+            text-align: center;
+            box-shadow: 0 2px 4px rgba(220, 53, 69, 0.3);
         }
 
         .loading {
@@ -474,7 +488,7 @@
     <div class="container">
         <div class="header">
             <h1>🚀 바이낸스 StochRSI 스캐너</h1>
-            <p>관심목록 (%D≤5)과 매수 (%D<1) 종목을 실시간으로 모니터링합니다</p>
+            <p>관심 종목 (%D≤5)과 매수 종목 (%D<1)을 실시간으로 모니터링합니다</p>
         </div>
 
         <div class="controls">
@@ -482,8 +496,8 @@
                 <!-- Top N 제한 제거됨 - 조건에 맞는 모든 종목 표시 -->
             </div>
             <div class="control-group">
-                <button id="specialCategoryBtn" class="btn" style="background: linear-gradient(135deg, #dc3545 0%, #fd7e14 100%);">매수 (%D<1)</button>
-                <button id="hotSetBtn" class="btn" style="background: linear-gradient(135deg, #6f42c1 0%, #e83e8c 100%);">관심목록 (%D≤5)</button>
+                <button id="specialCategoryBtn" class="btn" style="background: linear-gradient(135deg, #dc3545 0%, #fd7e14 100%);">매수 종목 (%D<1)</button>
+                <button id="hotSetBtn" class="btn" style="background: linear-gradient(135deg, #6f42c1 0%, #e83e8c 100%);">관심 종목 (%D≤5)</button>
             </div>
         </div>
 
@@ -657,8 +671,8 @@
         let scanInterval = null;
         let allSymbols = [];
         let filteredResults = [];
-        let hotSet = []; // 스캔 결과 (관심목록 버튼용) - %D ≤ 5인 종목들
-        let specialCategory = []; // 매수 - %D < 1인 종목들
+        let hotSet = []; // 스캔 결과 (관심 종목 버튼용) - %D ≤ 5인 종목들
+        let specialCategory = []; // 매수 종목 - %D < 1인 종목들
 
         // DOM 요소들
         const hotSetBtn = document.getElementById('hotSetBtn');
@@ -788,7 +802,7 @@
             }
         }
 
-        // 스캔: 1일봉 기준 %D≤5% 종목 선별 (관심목록) 및 %D<1% 종목 선별 (매수)
+        // 스캔: 1일봉 기준 %D≤5% 종목 선별 (관심 종목) 및 %D<1% 종목 선별 (매수 종목)
         async function scanSymbols(symbols, settings) {
             console.log('=== 스캔 시작 ===');
             console.log(`전체 ${symbols.length}개 종목을 분석합니다.`);
@@ -796,8 +810,8 @@
             console.log('스캔할 종목들 (마지막 10개):', symbols.slice(-10));
             showStatus(`전체 ${symbols.length}개 종목 중 %D≤5% 종목 선별 중...`, 'info');
             
-            const hotSetResults = []; // 관심목록: %D ≤ 5인 종목들
-            const specialResults = []; // 매수: %D < 1인 종목들
+            const hotSetResults = []; // 관심 종목: %D ≤ 5인 종목들
+            const specialResults = []; // 매수 종목: %D < 1인 종목들
             const batchSize = 10; // 배치 크기 증가 (처리 속도 향상)
             let processedCount = 0;
             let errorCount = 0;
@@ -821,10 +835,10 @@
                     // 결과를 두 카테고리로 분류
                     validResults.forEach(result => {
                         if (result.dValue < 1) {
-                            specialResults.push(result); // 매수: %D < 1
+                            specialResults.push(result); // 매수 종목: %D < 1
                         }
                         if (result.dValue <= 5) {
-                            hotSetResults.push(result); // 관심목록: %D ≤ 5
+                            hotSetResults.push(result); // 관심 종목: %D ≤ 5
                         }
                     });
                     
@@ -833,7 +847,7 @@
                     
                     const progress = Math.min(i + batchSize, symbols.length);
                     const percentage = Math.round((progress / symbols.length) * 100);
-                    showStatus(`진행: ${progress}/${symbols.length}개 종목 분석 (${percentage}%) - 관심목록: ${hotSetResults.length}개, 매수: ${specialResults.length}개, 오류: ${errorCount}개`, 'info');
+                    showStatus(`진행: ${progress}/${symbols.length}개 종목 분석 (${percentage}%) - 관심 종목: ${hotSetResults.length}개, 매수 종목: ${specialResults.length}개, 오류: ${errorCount}개`, 'info');
                     
                     console.log(`배치 ${Math.floor(i/batchSize) + 1}: ${batch.length}개 처리, ${validResults.length}개 성공, ${batchErrors}개 실패`);
                     
@@ -850,15 +864,15 @@
             specialResults.sort((a, b) => b.volumeUsdt - a.volumeUsdt);
             
             // 전역 변수에 저장
-            hotSet = hotSetResults; // 관심목록: %D ≤ 5인 종목들
-            specialCategory = specialResults; // 매수: %D < 1인 종목들
+            hotSet = hotSetResults; // 관심 종목: %D ≤ 5인 종목들
+            specialCategory = specialResults; // 매수 종목: %D < 1인 종목들
             
             console.log(`=== 스캔 완료 ===`);
             console.log(`전체 처리된 종목: ${processedCount}/${symbols.length}개`);
             console.log(`오류 발생: ${errorCount}개`);
-            console.log(`관심목록 (%D ≤ 5): ${hotSetResults.length}개`);
-            console.log(`매수 (%D < 1): ${specialResults.length}개`);
-            console.log('관심목록 종목들:', hotSetResults.map(item => `${item.symbol}(${item.dValue.toFixed(2)}%)`));
+            console.log(`관심 종목 (%D ≤ 5): ${hotSetResults.length}개`);
+            console.log(`매수 종목 (%D < 1): ${specialResults.length}개`);
+            console.log('관심 종목들:', hotSetResults.map(item => `${item.symbol}(${item.dValue.toFixed(2)}%)`));
             console.log('매수 종목들:', specialResults.map(item => `${item.symbol}(${item.dValue.toFixed(2)}%)`));
             
             // 처리 완료율 확인
@@ -867,7 +881,7 @@
                 console.warn(`경고: 전체 종목의 ${completionRate}%만 처리되었습니다. 일부 종목이 누락되었을 수 있습니다.`);
                 showStatus(`경고: ${completionRate}%만 처리됨. 일부 종목이 누락되었을 수 있습니다.`, 'error');
             } else {
-                showStatus(`스캔 완료: 관심목록 ${hotSetResults.length}개, 매수 ${specialResults.length}개 발견 (${completionRate}% 처리 완료)`, 'success');
+                showStatus(`스캔 완료: 관심 종목 ${hotSetResults.length}개, 매수 종목 ${specialResults.length}개 발견 (${completionRate}% 처리 완료)`, 'success');
             }
             
             return { hotSet: hotSetResults, specialCategory: specialResults };
@@ -917,7 +931,7 @@
                 // 퍼센트 스케일로 변환
                 const dValuePercent = isFinite(stochRsi.dNow) ? stochRsi.dNow * 100 : NaN;
                 
-                // 조건: %D ≤ 5% (1일봉 기준) - 관심목록용
+                // 조건: %D ≤ 5% (1일봉 기준) - 관심 종목용
                 if (isFinite(stochRsi.dNow) && dValuePercent <= 5) {
                     return {
                         symbol: symbol,
@@ -1089,13 +1103,9 @@
                         <thead>
                             <tr>
                                 <th>심볼</th>
+                                <th>%D</th>
                                 <th>현재가</th>
                                 <th>변동률</th>
-                                <th>거래량</th>
-                                <th>RSI</th>
-                                <th>%K</th>
-                                <th>%D</th>
-                                <th>업데이트</th>
                             </tr>
                         </thead>
                         <tbody>
@@ -1103,19 +1113,14 @@
 
             results.forEach(item => {
                 const changeClass = item.changePercent >= 0 ? 'positive' : 'negative';
-                const rsiClass = item.rsi < 30 ? 'oversold' : item.rsi > 70 ? 'overbought' : '';
                 const stochClass = item.dValue < 20 ? 'oversold' : '';
 
                 tableHTML += `
                     <tr>
                         <td class="symbol">${item.symbol}</td>
+                        <td class="stoch-value ${stochClass}">${item.dValue.toFixed(2)}</td>
                         <td class="price ${item.changePercent < 0 ? 'negative' : ''}">$${item.price.toFixed(4)}</td>
                         <td class="change ${changeClass}">${item.changePercent >= 0 ? '+' : ''}${item.changePercent.toFixed(2)}%</td>
-                        <td>${(item.volume * item.price).toLocaleString()} USDT</td>
-                        <td class="rsi-value ${rsiClass}">${item.rsi.toFixed(2)}</td>
-                        <td class="stoch-value">${item.kValue.toFixed(2)}</td>
-                        <td class="stoch-value ${stochClass}">${item.dValue.toFixed(2)}</td>
-                        <td>${item.timestamp}</td>
                     </tr>
                 `;
             });
@@ -1146,7 +1151,7 @@
                 console.log('=== 스캔 시작 ===');
                 console.log('스캔 설정:', settings);
                 console.log(`전체 스캔 대상: ${allSymbols.length}개 USDT-m futures 종목`);
-                console.log('스캔 조건: 관심목록 (%D ≤ 5%), 매수 (%D < 1%) (1일봉 기준, 현재가 반영)');
+                console.log('스캔 조건: 관심 종목 (%D ≤ 5%), 매수 종목 (%D < 1%) (1일봉 기준, 현재가 반영)');
                 
                 // 스캔 실행
                 const scanResults = await scanSymbols(allSymbols, settings);
@@ -1157,7 +1162,7 @@
                 resultsContainer.innerHTML = createResultsTable(scanResults.specialCategory);
 
                 if (scanResults.specialCategory.length > 0) {
-                    showStatus(`스캔 완료! 매수 ${scanResults.specialCategory.length}개, 관심목록 ${scanResults.hotSet.length}개 종목을 발견했습니다.`, 'success');
+                    showStatus(`스캔 완료! 매수 종목 ${scanResults.specialCategory.length}개, 관심 종목 ${scanResults.hotSet.length}개 발견했습니다.`, 'success');
                 } else {
                     showStatus(`스캔 완료! 조건을 만족하는 종목이 없습니다.`, 'info');
                 }
@@ -1232,21 +1237,21 @@
 
         // 이벤트 리스너
 
-        // 관심목록 보기 버튼 이벤트 리스너
+        // 관심 종목 보기 버튼 이벤트 리스너
         hotSetBtn.addEventListener('click', () => {
             if (hotSet.length === 0) {
-                showStatus('관심목록이 없습니다. 먼저 스캔을 실행하세요.', 'info');
-                resultsContainer.innerHTML = '<div class="no-results">관심목록이 없습니다. 먼저 스캔을 실행하세요.</div>';
+                showStatus('관심 종목이 없습니다. 먼저 스캔을 실행하세요.', 'info');
+                resultsContainer.innerHTML = '<div class="no-results">관심 종목이 없습니다. 먼저 스캔을 실행하세요.</div>';
                 resultsCount.textContent = '0개 종목';
                 return;
             }
             
-            showStatus(`관심목록 (%D≤5) ${hotSet.length}개 종목 표시`, 'info');
-            resultsCount.textContent = `${hotSet.length}개 관심종목`;
+            showStatus(`관심 종목 (%D≤5) ${hotSet.length}개 종목 표시`, 'info');
+            resultsCount.textContent = `${hotSet.length}개 관심 종목`;
             resultsContainer.innerHTML = createResultsTable(hotSet);
         });
 
-        // 매수 보기 버튼 이벤트 리스너
+        // 매수 종목 보기 버튼 이벤트 리스너
         specialCategoryBtn.addEventListener('click', () => {
             if (specialCategory.length === 0) {
                 showStatus('매수 종목이 없습니다. 먼저 스캔을 실행하세요.', 'info');
@@ -1255,8 +1260,8 @@
                 return;
             }
             
-            showStatus(`매수 (%D<1) ${specialCategory.length}개 종목 표시`, 'info');
-            resultsCount.textContent = `${specialCategory.length}개 매수종목`;
+            showStatus(`매수 종목 (%D<1) ${specialCategory.length}개 종목 표시`, 'info');
+            resultsCount.textContent = `${specialCategory.length}개 매수 종목`;
             resultsContainer.innerHTML = createResultsTable(specialCategory);
         });
 
