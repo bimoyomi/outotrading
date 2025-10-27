@@ -1,18 +1,14 @@
 {
   "version": 2,
   "name": "binance-stochrsi-scanner",
-  "routes": [
+  "rewrites": [
     {
-      "src": "/",
-      "dest": "/binance_stochrsi_scanner.html"
+      "source": "/",
+      "destination": "/binance_stochrsi_scanner.html"
     },
     {
-      "src": "/scanner",
-      "dest": "/binance_stochrsi_scanner.html"
-    },
-    {
-      "src": "/(.*)",
-      "dest": "/$1"
+      "source": "/scanner",
+      "destination": "/binance_stochrsi_scanner.html"
     }
   ],
   "headers": [
