@@ -84,6 +84,38 @@
             border-color: #007bff;
         }
 
+        .interval-buttons {
+            display: flex;
+            gap: 10px;
+            flex-wrap: wrap;
+        }
+
+        .interval-btn {
+            background: #ffffff;
+            color: #495057;
+            border: 2px solid #e9ecef;
+            padding: 10px 20px;
+            border-radius: 8px;
+            font-size: 1rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+
+        .interval-btn:hover {
+            background: #f8f9fa;
+            border-color: #007bff;
+            transform: translateY(-2px);
+            box-shadow: 0 3px 8px rgba(0, 123, 255, 0.2);
+        }
+
+        .interval-btn.active {
+            background: linear-gradient(135deg, #007bff 0%, #0056b3 100%);
+            color: white;
+            border-color: #007bff;
+            box-shadow: 0 3px 10px rgba(0, 123, 255, 0.4);
+        }
+
         .btn {
             background: linear-gradient(135deg, #007bff 0%, #0056b3 100%);
             color: white;
@@ -256,6 +288,19 @@
             box-shadow: 0 2px 4px rgba(220, 53, 69, 0.3);
         }
 
+        .stoch.overbought {
+            color: #ffffff;
+            background: linear-gradient(135deg, #ff9800 0%, #f57c00 100%);
+            padding: 8px 12px;
+            border-radius: 6px;
+            font-weight: 700;
+            font-size: 1.15rem;
+            display: inline-block;
+            min-width: 60px;
+            text-align: center;
+            box-shadow: 0 2px 4px rgba(255, 152, 0, 0.3);
+        }
+
         .loading {
             text-align: center;
             padding: 40px;
@@ -284,15 +329,6 @@
             font-size: 1.1rem;
         }
 
-        .refresh-info {
-            background: #fff3cd;
-            border: 1px solid #ffeaa7;
-            color: #856404;
-            padding: 10px 15px;
-            border-radius: 8px;
-            margin-bottom: 20px;
-            font-size: 0.9rem;
-        }
 
         @media (max-width: 768px) {
             body {
@@ -330,6 +366,17 @@
                 width: 100%;
             }
 
+            .interval-buttons {
+                gap: 8px;
+            }
+
+            .interval-btn {
+                padding: 8px 15px;
+                font-size: 0.9rem;
+                flex: 1;
+                min-width: calc(50% - 4px);
+            }
+
             .btn {
                 padding: 15px 20px;
                 font-size: 1.1rem;
@@ -343,28 +390,6 @@
                 font-size: 0.9rem;
             }
 
-            .refresh-info {
-                margin: 15px;
-                padding: 12px 15px;
-                font-size: 0.85rem;
-            }
-
-            .refresh-info > div {
-                flex-direction: column;
-                gap: 10px;
-            }
-
-            .refresh-info > div > div:last-child {
-                display: flex;
-                flex-direction: column;
-                gap: 8px;
-            }
-
-            .refresh-info .btn {
-                padding: 10px 15px;
-                font-size: 0.9rem;
-                margin-bottom: 0;
-            }
 
             .results {
                 padding: 20px 15px;
@@ -446,6 +471,12 @@
                 font-size: 0.9rem;
             }
 
+            .interval-btn {
+                padding: 8px 12px;
+                font-size: 0.85rem;
+                min-width: calc(33.333% - 6px);
+            }
+
             .btn {
                 padding: 12px 15px;
                 font-size: 1rem;
@@ -488,41 +519,31 @@
     <div class="container">
         <div class="header">
             <h1>🚀 바이낸스 StochRSI 스캐너</h1>
-            <p>다양한 시간 간격으로 관심 종목 (%D≤5)과 매수 종목 (%D<1)을 실시간으로 모니터링합니다</p>
         </div>
 
         <div class="controls">
             <div class="control-group">
                 <div class="control-item">
-                    <label for="intervalSelect">시간 간격</label>
-                    <select id="intervalSelect" class="control-item">
-                        <option value="15m">15분</option>
-                        <option value="30m">30분</option>
-                        <option value="1h">1시간</option>
-                        <option value="4h">4시간</option>
-                        <option value="12h">12시간</option>
-                        <option value="1d" selected>1일</option>
-                    </select>
+                    <label>시간 간격</label>
+                    <div class="interval-buttons">
+                        <button class="interval-btn" data-interval="15m">15분</button>
+                        <button class="interval-btn" data-interval="30m">30분</button>
+                        <button class="interval-btn" data-interval="1h">1시간</button>
+                        <button class="interval-btn" data-interval="4h">4시간</button>
+                        <button class="interval-btn" data-interval="12h">12시간</button>
+                        <button class="interval-btn" data-interval="1d">1일</button>
+                    </div>
                 </div>
             </div>
             <div class="control-group">
-                <button id="specialCategoryBtn" class="btn" style="background: linear-gradient(135deg, #dc3545 0%, #fd7e14 100%);">매수 종목 (%D<1)</button>
-                <button id="hotSetBtn" class="btn" style="background: linear-gradient(135deg, #6f42c1 0%, #e83e8c 100%);">관심 종목 (%D≤5)</button>
+                <button id="specialCategoryBtn" class="btn" style="background: linear-gradient(135deg, #dc3545 0%, #fd7e14 100%);">극과매도 종목 (%D<1)</button>
+                <button id="hotSetBtn" class="btn" style="background: linear-gradient(135deg, #6f42c1 0%, #e83e8c 100%);">과매도 종목 (%D≤5)</button>
+                <button id="overbought95Btn" class="btn" style="background: linear-gradient(135deg, #ff9800 0%, #f57c00 100%);">과매수 종목 (%D≥95)</button>
+                <button id="overbought99Btn" class="btn" style="background: linear-gradient(135deg, #f44336 0%, #d32f2f 100%);">극과매수 종목 (%D≥99)</button>
             </div>
         </div>
 
         <div id="status" class="status" style="display: none;"></div>
-        <div id="refreshInfo" class="refresh-info" style="display: none;">
-            <div style="display: flex; justify-content: space-between; align-items: center;">
-                <div>
-                    마지막 업데이트: <span id="lastUpdate"></span>
-                </div>
-                <div style="display: flex; gap: 10px;">
-                    <button id="manualRefreshBtn" class="btn" style="background: linear-gradient(135deg, #28a745 0%, #20c997 100%); padding: 8px 15px; font-size: 0.9rem;">수동 새로고침</button>
-                    <button id="autoRefreshToggleBtn" class="btn" style="background: linear-gradient(135deg, #dc3545 0%, #fd7e14 100%); padding: 8px 15px; font-size: 0.9rem;">자동 업데이트 중지</button>
-                </div>
-            </div>
-        </div>
 
         <div class="results">
             <div class="results-header">
@@ -678,23 +699,23 @@
 
         // 전역 변수
         let isScanning = false;
-        let scanInterval = null;
         let allSymbols = [];
         let filteredResults = [];
-        let hotSet = []; // 스캔 결과 (관심 종목 버튼용) - %D ≤ 5인 종목들
-        let specialCategory = []; // 매수 종목 - %D < 1인 종목들
+        let hotSet = []; // 스캔 결과 (과매도 종목 버튼용) - %D ≤ 5인 종목들
+        let specialCategory = []; // 극과매도 종목 - %D < 1인 종목들
+        let overbought95 = []; // 과매수 종목 - %D ≥ 95인 종목들
+        let overbought99 = []; // 극과매수 종목 - %D ≥ 99인 종목들
 
         // DOM 요소들
         const hotSetBtn = document.getElementById('hotSetBtn');
         const specialCategoryBtn = document.getElementById('specialCategoryBtn');
-        const manualRefreshBtn = document.getElementById('manualRefreshBtn');
-        const autoRefreshToggleBtn = document.getElementById('autoRefreshToggleBtn');
+        const overbought95Btn = document.getElementById('overbought95Btn');
+        const overbought99Btn = document.getElementById('overbought99Btn');
         const statusDiv = document.getElementById('status');
-        const refreshInfoDiv = document.getElementById('refreshInfo');
         const resultsContainer = document.getElementById('resultsContainer');
         const resultsCount = document.getElementById('resultsCount');
-        const lastUpdateSpan = document.getElementById('lastUpdate');
-        const intervalSelect = document.getElementById('intervalSelect');
+        let selectedInterval = '1d'; // 기본값
+        const intervalButtons = document.querySelectorAll('.interval-btn');
 
         // 설정값 가져오기 (고정값 사용)
         function getSettings() {
@@ -703,7 +724,7 @@
                 stochPeriod: 14,      // 고정값
                 kPeriod: 3,           // 고정값
                 dPeriod: 3,           // 고정값
-                interval: intervalSelect.value  // 선택된 시간 간격
+                interval: selectedInterval  // 선택된 시간 간격
             };
         }
 
@@ -814,23 +835,28 @@
             }
         }
 
-        // 스캔: 선택된 시간 간격 기준 %D≤5% 종목 선별 (관심 종목) 및 %D<1% 종목 선별 (매수 종목)
+        // 스캔: 선택된 시간 간격 기준 모든 종목 분석 및 조건별 분류
         async function scanSymbols(symbols, settings) {
             console.log('=== 스캔 시작 ===');
             console.log(`시간 간격: ${settings.interval}`);
             console.log(`전체 ${symbols.length}개 종목을 분석합니다.`);
             console.log('스캔할 종목들 (처음 10개):', symbols.slice(0, 10));
             console.log('스캔할 종목들 (마지막 10개):', symbols.slice(-10));
-            showStatus(`전체 ${symbols.length}개 종목 중 ${settings.interval} 간격으로 %D≤5% 종목 선별 중...`, 'info');
+            showStatus(`전체 ${symbols.length}개 종목 중 ${settings.interval} 간격으로 분석 중...`, 'info');
             
             const hotSetResults = []; // 관심 종목: %D ≤ 5인 종목들
             const specialResults = []; // 매수 종목: %D < 1인 종목들
+            const overbought95Results = []; // 과매수 종목: %D ≥ 95인 종목들
+            const overbought99Results = []; // 극과매수 종목: %D ≥ 99인 종목들
             const batchSize = 10; // 배치 크기 증가 (처리 속도 향상)
             let processedCount = 0;
             let errorCount = 0;
             
             for (let i = 0; i < symbols.length; i += batchSize) {
-                if (!isScanning) break;
+                if (!isScanning) {
+                    console.log(`스캔이 중단되었습니다. ${i}/${symbols.length}개 종목까지 처리됨`);
+                    break;
+                }
                 
                 const batch = symbols.slice(i, i + batchSize);
                 const batchPromises = batch.map(symbol => analyzeSymbolForHotSet(symbol, settings));
@@ -845,13 +871,19 @@
                         .filter(result => result.status === 'rejected')
                         .length;
                     
-                    // 결과를 두 카테고리로 분류
+                    // 결과를 각 카테고리로 분류
                     validResults.forEach(result => {
                         if (result.dValue < 1) {
                             specialResults.push(result); // 매수 종목: %D < 1
                         }
                         if (result.dValue <= 5) {
                             hotSetResults.push(result); // 관심 종목: %D ≤ 5
+                        }
+                        if (result.dValue >= 95) {
+                            overbought95Results.push(result); // 과매수 종목: %D ≥ 95
+                        }
+                        if (result.dValue >= 99) {
+                            overbought99Results.push(result); // 극과매수 종목: %D ≥ 99
                         }
                     });
                     
@@ -860,7 +892,7 @@
                     
                     const progress = Math.min(i + batchSize, symbols.length);
                     const percentage = Math.round((progress / symbols.length) * 100);
-                    showStatus(`진행: ${progress}/${symbols.length}개 종목 분석 (${percentage}%) - 관심 종목: ${hotSetResults.length}개, 매수 종목: ${specialResults.length}개, 오류: ${errorCount}개`, 'info');
+                    showStatus(`진행: ${progress}/${symbols.length}개 종목 분석 (${percentage}%) - 극과매도: ${specialResults.length}개, 과매도: ${hotSetResults.length}개, 과매수: ${overbought95Results.length}개, 극과매수: ${overbought99Results.length}개, 오류: ${errorCount}개`, 'info');
                     
                     console.log(`배치 ${Math.floor(i/batchSize) + 1}: ${batch.length}개 처리, ${validResults.length}개 성공, ${batchErrors}개 실패`);
                     
@@ -875,18 +907,26 @@
             // 거래량 기준으로 정렬
             hotSetResults.sort((a, b) => b.volumeUsdt - a.volumeUsdt);
             specialResults.sort((a, b) => b.volumeUsdt - a.volumeUsdt);
+            overbought95Results.sort((a, b) => b.volumeUsdt - a.volumeUsdt);
+            overbought99Results.sort((a, b) => b.volumeUsdt - a.volumeUsdt);
             
             // 전역 변수에 저장
             hotSet = hotSetResults; // 관심 종목: %D ≤ 5인 종목들
             specialCategory = specialResults; // 매수 종목: %D < 1인 종목들
+            overbought95 = overbought95Results; // 과매수 종목: %D ≥ 95인 종목들
+            overbought99 = overbought99Results; // 극과매수 종목: %D ≥ 99인 종목들
             
             console.log(`=== 스캔 완료 ===`);
             console.log(`전체 처리된 종목: ${processedCount}/${symbols.length}개`);
             console.log(`오류 발생: ${errorCount}개`);
             console.log(`관심 종목 (%D ≤ 5): ${hotSetResults.length}개`);
             console.log(`매수 종목 (%D < 1): ${specialResults.length}개`);
+            console.log(`과매수 종목 (%D ≥ 95): ${overbought95Results.length}개`);
+            console.log(`극과매수 종목 (%D ≥ 99): ${overbought99Results.length}개`);
             console.log('관심 종목들:', hotSetResults.map(item => `${item.symbol}(${item.dValue.toFixed(2)}%)`));
             console.log('매수 종목들:', specialResults.map(item => `${item.symbol}(${item.dValue.toFixed(2)}%)`));
+            console.log('과매수 종목들:', overbought95Results.map(item => `${item.symbol}(${item.dValue.toFixed(2)}%)`));
+            console.log('극과매수 종목들:', overbought99Results.map(item => `${item.symbol}(${item.dValue.toFixed(2)}%)`));
             
             // 처리 완료율 확인
             const completionRate = Math.round((processedCount / symbols.length) * 100);
@@ -894,13 +934,18 @@
                 console.warn(`경고: 전체 종목의 ${completionRate}%만 처리되었습니다. 일부 종목이 누락되었을 수 있습니다.`);
                 showStatus(`경고: ${completionRate}%만 처리됨. 일부 종목이 누락되었을 수 있습니다.`, 'error');
             } else {
-                showStatus(`스캔 완료: 관심 종목 ${hotSetResults.length}개, 매수 종목 ${specialResults.length}개 발견 (${completionRate}% 처리 완료)`, 'success');
+                showStatus(`스캔 완료: 관심 ${hotSetResults.length}개, 매수 ${specialResults.length}개, 과매수95 ${overbought95Results.length}개, 과매수99 ${overbought99Results.length}개 발견 (${completionRate}% 처리 완료)`, 'success');
             }
             
-            return { hotSet: hotSetResults, specialCategory: specialResults };
+            return { 
+                hotSet: hotSetResults, 
+                specialCategory: specialResults,
+                overbought95: overbought95Results,
+                overbought99: overbought99Results
+            };
         }
 
-        // 종목 분석 (선택된 시간 간격 기준, %D ≤ 5인 종목 선별)
+        // 종목 분석 (선택된 시간 간격 기준, 모든 종목의 %D 값 계산)
         async function analyzeSymbolForHotSet(symbol, settings) {
             try {
                 const [stats, klineData] = await Promise.all([
@@ -944,8 +989,8 @@
                 // 퍼센트 스케일로 변환
                 const dValuePercent = isFinite(stochRsi.dNow) ? stochRsi.dNow * 100 : NaN;
                 
-                // 조건: %D ≤ 5% (선택된 시간 간격 기준) - 관심 종목용
-                if (isFinite(stochRsi.dNow) && dValuePercent <= 5) {
+                // %D 값이 유효한 경우에만 반환 (조건 필터링은 스캔 함수에서 수행)
+                if (isFinite(stochRsi.dNow)) {
                     return {
                         symbol: symbol,
                         price: price,
@@ -1102,13 +1147,17 @@
         }
 
         // 결과 테이블 생성
-        function createResultsTable(results) {
+        function createResultsTable(results, sortDescending = false) {
             if (results.length === 0) {
                 return '<div class="no-results">조건에 맞는 종목이 없습니다.</div>';
             }
 
-            // %D 값으로 정렬 (낮은 순)
-            results.sort((a, b) => a.dValue - b.dValue);
+            // %D 값으로 정렬 (sortDescending이 true면 높은 순, false면 낮은 순)
+            if (sortDescending) {
+                results.sort((a, b) => b.dValue - a.dValue);
+            } else {
+                results.sort((a, b) => a.dValue - b.dValue);
+            }
 
             let tableHTML = `
                 <div class="table-container">
@@ -1126,7 +1175,7 @@
 
             results.forEach(item => {
                 const changeClass = item.changePercent >= 0 ? 'positive' : 'negative';
-                const stochClass = item.dValue < 20 ? 'oversold' : '';
+                const stochClass = item.dValue < 20 ? 'oversold' : (item.dValue >= 80 ? 'overbought' : '');
 
                 tableHTML += `
                     <tr>
@@ -1149,7 +1198,13 @@
 
         // 스캔 실행
         async function runScan() {
-            if (isScanning) return;
+            // 스캔이 이미 진행 중이면 중단 신호 설정
+            if (isScanning) {
+                console.log('기존 스캔 중단 신호 전송');
+                isScanning = false;
+                // 현재 스캔이 완전히 중단될 때까지 잠시 대기
+                await new Promise(resolve => setTimeout(resolve, 200));
+            }
 
             isScanning = true;
 
@@ -1164,88 +1219,42 @@
                 console.log('=== 스캔 시작 ===');
                 console.log('스캔 설정:', settings);
                 console.log(`전체 스캔 대상: ${allSymbols.length}개 USDT-m futures 종목`);
-                console.log(`스캔 조건: 관심 종목 (%D ≤ 5%), 매수 종목 (%D < 1%) (${settings.interval} 간격 기준, 현재가 반영)`);
+                console.log(`스캔 조건: 과매도 종목 (%D ≤ 5%), 극과매도 종목 (%D < 1%) (${settings.interval} 간격 기준, 현재가 반영)`);
                 
                 // 스캔 실행
                 const scanResults = await scanSymbols(allSymbols, settings);
                 
-                // 결과 표시 (기본적으로 매수 종목 표시)
+                // 스캔이 중단된 경우 결과 표시하지 않음 (isScanning이 false이고 새로운 스캔이 시작되지 않은 경우)
+                // 하지만 scanSymbols가 반환되기 전에 isScanning이 false로 변경되었을 수 있으므로,
+                // 스캔이 정상 완료되었는지 확인하기 위해 scanResults의 존재 여부만 확인
+                if (!scanResults) {
+                    console.log('스캔이 중단되었습니다. 결과를 표시하지 않습니다.');
+                    return;
+                }
+                
+                // 결과 표시 (기본적으로 극과매도 종목 표시)
                 filteredResults = scanResults.specialCategory;
                 resultsCount.textContent = `${scanResults.specialCategory.length}개 종목`;
                 resultsContainer.innerHTML = createResultsTable(scanResults.specialCategory);
 
-                if (scanResults.specialCategory.length > 0) {
-                    showStatus(`스캔 완료! 매수 종목 ${scanResults.specialCategory.length}개, 관심 종목 ${scanResults.hotSet.length}개 발견했습니다.`, 'success');
-                } else {
-                    showStatus(`스캔 완료! 조건을 만족하는 종목이 없습니다.`, 'info');
-                }
+                // 시간 간격 텍스트 가져오기
+                const activeIntervalBtn = document.querySelector('.interval-btn.active');
+                const intervalText = activeIntervalBtn ? activeIntervalBtn.textContent : settings.interval;
 
-                // 스캔 완료 후 자동 업데이트 정보 갱신
-                updateRefreshInfo();
+                if (scanResults.specialCategory.length > 0 || scanResults.hotSet.length > 0) {
+                    const statusMsg = `${intervalText} 간격 기준 추천 종목 발견! 극과매도: ${scanResults.specialCategory.length}개, 과매도: ${scanResults.hotSet.length}개, 과매수(≥95): ${scanResults.overbought95.length}개, 극과매수(≥99): ${scanResults.overbought99.length}개`;
+                    showStatus(statusMsg, 'success');
+                } else {
+                    showStatus(`${intervalText} 간격 기준 조건을 만족하는 종목이 없습니다.`, 'info');
+                }
 
             } catch (error) {
                 console.error('스캔 오류:', error);
                 showStatus(`오류 발생: ${error.message}`, 'error');
                 resultsContainer.innerHTML = '<div class="no-results">데이터를 가져올 수 없습니다.</div>';
-                
-                // 오류가 발생해도 자동 업데이트는 계속 작동하도록 함
-                console.log('오류 발생했지만 자동 업데이트는 계속 작동합니다.');
             } finally {
                 isScanning = false;
             }
-        }
-
-        // 자동 새로고침 시작
-        function startAutoRefresh() {
-            if (scanInterval) clearInterval(scanInterval);
-            
-            scanInterval = setInterval(() => {
-                console.log('자동 업데이트 시작...');
-                if (isScanning) {
-                    console.log('현재 스캔 중이므로 건너뜀');
-                    return;
-                }
-                runScan();
-            }, 300000); // 5분마다 새로고침
-
-            refreshInfoDiv.style.display = 'block';
-            updateRefreshInfo();
-            updateAutoRefreshButton();
-            console.log('자동 업데이트 시작됨 - 5분마다 실행');
-        }
-
-        // 자동 새로고침 중지
-        function stopAutoRefresh() {
-            if (scanInterval) {
-                clearInterval(scanInterval);
-                scanInterval = null;
-                console.log('자동 업데이트 중지됨');
-            }
-            // 자동 업데이트가 중지되어도 버튼은 계속 보이도록 함
-            refreshInfoDiv.style.display = 'block';
-            updateAutoRefreshButton();
-        }
-
-        // 자동 업데이트 상태 확인
-        function isAutoRefreshActive() {
-            return scanInterval !== null;
-        }
-
-        // 자동 업데이트 버튼 상태 업데이트
-        function updateAutoRefreshButton() {
-            if (isAutoRefreshActive()) {
-                autoRefreshToggleBtn.textContent = '자동 업데이트 중지';
-                autoRefreshToggleBtn.style.background = 'linear-gradient(135deg, #dc3545 0%, #fd7e14 100%)';
-            } else {
-                autoRefreshToggleBtn.textContent = '자동 업데이트 시작';
-                autoRefreshToggleBtn.style.background = 'linear-gradient(135deg, #28a745 0%, #20c997 100%)';
-            }
-        }
-
-        // 새로고침 정보 업데이트
-        function updateRefreshInfo() {
-            const now = new Date();
-            lastUpdateSpan.textContent = now.toLocaleTimeString();
         }
 
         // 이벤트 리스너
@@ -1253,87 +1262,103 @@
         // 관심 종목 보기 버튼 이벤트 리스너
         hotSetBtn.addEventListener('click', () => {
             if (hotSet.length === 0) {
-                showStatus('관심 종목이 없습니다. 먼저 스캔을 실행하세요.', 'info');
-                resultsContainer.innerHTML = '<div class="no-results">관심 종목이 없습니다. 먼저 스캔을 실행하세요.</div>';
+                showStatus('과매도 종목이 없습니다. 먼저 스캔을 실행하세요.', 'info');
+                resultsContainer.innerHTML = '<div class="no-results">과매도 종목이 없습니다. 먼저 스캔을 실행하세요.</div>';
                 resultsCount.textContent = '0개 종목';
                 return;
             }
             
-            showStatus(`관심 종목 (%D≤5) ${hotSet.length}개 종목 표시`, 'info');
-            resultsCount.textContent = `${hotSet.length}개 관심 종목`;
+            showStatus(`과매도 종목 (%D≤5) ${hotSet.length}개 종목 표시`, 'info');
+            resultsCount.textContent = `${hotSet.length}개 과매도 종목`;
             resultsContainer.innerHTML = createResultsTable(hotSet);
         });
 
         // 매수 종목 보기 버튼 이벤트 리스너
         specialCategoryBtn.addEventListener('click', () => {
             if (specialCategory.length === 0) {
-                showStatus('매수 종목이 없습니다. 먼저 스캔을 실행하세요.', 'info');
-                resultsContainer.innerHTML = '<div class="no-results">매수 종목이 없습니다. 먼저 스캔을 실행하세요.</div>';
+                showStatus('극과매도 종목이 없습니다. 먼저 스캔을 실행하세요.', 'info');
+                resultsContainer.innerHTML = '<div class="no-results">극과매도 종목이 없습니다. 먼저 스캔을 실행하세요.</div>';
                 resultsCount.textContent = '0개 종목';
                 return;
             }
             
-            showStatus(`매수 종목 (%D<1) ${specialCategory.length}개 종목 표시`, 'info');
-            resultsCount.textContent = `${specialCategory.length}개 매수 종목`;
+            showStatus(`극과매도 종목 (%D<1) ${specialCategory.length}개 종목 표시`, 'info');
+            resultsCount.textContent = `${specialCategory.length}개 극과매도 종목`;
             resultsContainer.innerHTML = createResultsTable(specialCategory);
         });
 
-        // 수동 새로고침 버튼 이벤트 리스너
-        manualRefreshBtn.addEventListener('click', async () => {
-            if (isScanning) {
-                showStatus('현재 스캔 중입니다. 잠시 후 다시 시도하세요.', 'info');
+        // 과매수 종목 (%D≥95) 보기 버튼 이벤트 리스너
+        overbought95Btn.addEventListener('click', () => {
+            if (overbought95.length === 0) {
+                showStatus('과매수 종목이 없습니다. 먼저 스캔을 실행하세요.', 'info');
+                resultsContainer.innerHTML = '<div class="no-results">과매수 종목이 없습니다. 먼저 스캔을 실행하세요.</div>';
+                resultsCount.textContent = '0개 종목';
                 return;
             }
             
-            showStatus('수동 새로고침을 시작합니다...', 'info');
-            console.log('수동 새로고침 시작');
-            await runScan();
+            showStatus(`과매수 종목 (%D≥95) ${overbought95.length}개 종목 표시`, 'info');
+            resultsCount.textContent = `${overbought95.length}개 과매수 종목`;
+            resultsContainer.innerHTML = createResultsTable(overbought95, true);
         });
 
-        // 자동 업데이트 토글 버튼 이벤트 리스너
-        autoRefreshToggleBtn.addEventListener('click', () => {
-            if (isAutoRefreshActive()) {
-                stopAutoRefresh();
-                showStatus('자동 업데이트가 중지되었습니다.', 'info');
-                console.log('자동 업데이트 중지됨');
-            } else {
-                startAutoRefresh();
-                showStatus('자동 업데이트가 시작되었습니다.', 'success');
-                console.log('자동 업데이트 시작됨');
-            }
-        });
-
-        // 시간 간격 선택 변경 이벤트 리스너
-        intervalSelect.addEventListener('change', async () => {
-            if (isScanning) {
-                showStatus('현재 스캔 중입니다. 잠시 후 다시 시도하세요.', 'info');
+        // 극과매수 종목 (%D≥99) 보기 버튼 이벤트 리스너
+        overbought99Btn.addEventListener('click', () => {
+            if (overbought99.length === 0) {
+                showStatus('극과매수 종목이 없습니다. 먼저 스캔을 실행하세요.', 'info');
+                resultsContainer.innerHTML = '<div class="no-results">극과매수 종목이 없습니다. 먼저 스캔을 실행하세요.</div>';
+                resultsCount.textContent = '0개 종목';
                 return;
             }
             
-            const selectedInterval = intervalSelect.value;
-            showStatus(`시간 간격이 ${selectedInterval}로 변경되었습니다. 자동 스캔을 시작합니다...`, 'info');
-            console.log(`시간 간격 변경: ${selectedInterval}`);
-            await runScan();
+            showStatus(`극과매수 종목 (%D≥99) ${overbought99.length}개 종목 표시`, 'info');
+            resultsCount.textContent = `${overbought99.length}개 극과매수 종목`;
+            resultsContainer.innerHTML = createResultsTable(overbought99, true);
         });
 
-        // 페이지 로드 시 초기화 및 자동 스캔 시작
-        document.addEventListener('DOMContentLoaded', async () => {
-            showStatus('자동 스캔을 시작합니다...', 'info');
-            console.log('페이지 로드 완료 - 자동 스캔 시작');
-            
-            // 페이지 로드 후 1초 뒤에 자동으로 스캔 시작
-            setTimeout(async () => {
-                try {
-                    await runScan();
-                    startAutoRefresh();
-                    console.log('초기 스캔 완료 및 자동 업데이트 시작');
-                } catch (error) {
-                    console.error('초기 스캔 실패:', error);
-                    showStatus('초기 스캔 실패했지만 자동 업데이트를 시작합니다.', 'error');
-                    // 초기 스캔이 실패해도 자동 업데이트는 시작
-                    startAutoRefresh();
+
+        // 시간 간격 버튼 이벤트 리스너
+        intervalButtons.forEach(btn => {
+            btn.addEventListener('click', async () => {
+                // 스캔이 진행 중이면 중단
+                if (isScanning) {
+                    console.log('기존 스캔을 중단하고 새로운 시간 간격으로 스캔을 시작합니다.');
+                    isScanning = false; // 현재 스캔 중단 신호
+                    // 현재 스캔이 완전히 중단될 때까지 잠시 대기
+                    await new Promise(resolve => setTimeout(resolve, 100));
                 }
-            }, 1000);
+                
+                // 모든 버튼에서 active 클래스 제거
+                intervalButtons.forEach(b => b.classList.remove('active'));
+                
+                // 클릭된 버튼에 active 클래스 추가
+                btn.classList.add('active');
+                
+                // 선택된 간격 업데이트
+                selectedInterval = btn.getAttribute('data-interval');
+                
+                // 간격 텍스트 가져오기
+                const intervalText = btn.textContent;
+                
+                showStatus(`${intervalText} 간격 기준으로 종목을 분석합니다...`, 'info');
+                console.log(`시간 간격 변경: ${selectedInterval}`);
+                await runScan();
+            });
+        });
+        
+
+        // 페이지 로드 시 초기화
+        document.addEventListener('DOMContentLoaded', async () => {
+            console.log('페이지 로드 완료 - 시간 간격 버튼을 클릭하여 스캔을 시작하세요');
+            showStatus('시간 간격 버튼을 클릭하여 종목을 스캔하세요.', 'info');
+            
+            // 심볼 목록만 미리 가져오기
+            try {
+                if (allSymbols.length === 0) {
+                    allSymbols = await fetchSymbols();
+                }
+            } catch (error) {
+                console.error('심볼 목록 가져오기 실패:', error);
+            }
         });
     </script>
 </body>
